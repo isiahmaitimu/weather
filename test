@@ -1,0 +1,44 @@
+from flask import Flask, request, jsonify
+from weather import get_Weather
+from city_statistics import get_statistics
+from soccer import get_clubs  # ← nieuwe module toevoegen
+
+app = Flask(__name__)
+app.config["JSONIFY_PRETTYPRINT_REGULAR"] = True
+
+@app.route("/")
+def home():
+    return jsonify({
+        "message": "Welkom bij de CityInfo API 🌍",
+        "voorbeeld": "/cityinfo?city=Amsterdam"
+    })
+
+@app.route("/cityinfo", methods=["GET"])
+def get_city_data():
+    city = request.args.get("city")
+    if not city:
+        return jsonify({"error": "Geen stad opgegeven"}), 400
+
+    try:
+        # Haal data uit de drie modules
+        stats = get_statistics(city)
+        weather = get_Weather(city)
+        clubs = get_clubs('rotterdam')
+
+        # Combineer alles
+        combined = {
+            "city": city,
+            "statistics": stats,
+            "weather": weather,
+            "clubs": clubs
+        }
+
+        return jsonify(combined)
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+if __name__ == "__main__":
+    app.run(debug=True)
+
